@@ -14,7 +14,7 @@ def get_file(key):
     if filename:
         path = "/workspaces/DataCoinServer/"+filename
         print(path)
-        return send_file(path, as_attachment = True)
+        return send_file(filename, as_attachment = True)
         #return send_from_directory(directory='/', filename=filename)
     else:
         abort(404, description="Key not found")

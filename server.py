@@ -4,7 +4,7 @@ from typing import cast
 import os
 import numpy as np
 import pandas as pd
-
+from werkzeug.security import check_password_hash
 np.random.seed(42)
 
 random_matrix = np.random.rand(5, 3)
@@ -26,25 +26,29 @@ response = supabase.table('Users').select("*").execute()
 def get_data():
     # Get the integer parameter from the query string
     id = request.args.get('id', type=int)
-    password = request.args.get('password', type=int)
+    password = request.args.get('password', type=str)
     action = request.args.get('action', type=str)
     if id is not None and password is not None:
-        response = supabase.table('Users').select("id, password").eq("id", id).execute()
-        print(type(response.data))
-        if password == response.data[0].get("password"):
-            print("cascanueces")
-            if action is not None and action != "NONE":
-                print("doble cascanueces")
+        response = supabase.table('Users').select('*').eq('id', id).execute()
+        if response.data == []:
+            return jsonify({'message': 'User ID not found'}), 404
+        user = response.data[0]
+        stored_password_hash = user['password']
+        if password == str(stored_password_hash):
+            if action is None:
+                return jsonify({'message': 'Credentials are correct'}), 200
+            else:
                 if action == "GET_TASK":
                     df.to_csv("data.csv")
-                    return send_file("data.csv", mimetype='text/csv', as_attachment=True, download_name='data.csv')
-        return jsonify({"received_number": response.data[0]})
-    else:
-        return jsonify({"error": "No number provided"}), 400
+                    return send_file("data.csv", as_attachment=True, download_name="data.csv")
+                else:
+                    return jsonify({'message': 'Not an action'}), 400
+        else:
+            return jsonify({'message': 'Incorrect password'}), 401
 
-@app.route("/")
-def hello_world():
-    return f'{response}\'s profile'
+    else:
+        return jsonify({"error": "No credentials given."}), 400
+
 
 if __name__ == '__main__':
     print(response)

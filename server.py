@@ -1,4 +1,6 @@
 from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, redirect, url_for, flash
+from werkzeug.utils import secure_filename
 from supabase import create_client, Client
 from typing import cast
 import os
@@ -49,7 +51,22 @@ def get_data():
     else:
         return jsonify({"error": "No credentials given."}), 400
 
+@app.route('/upload', methods=['POST'])
+def handle_file():
+    print("file" in request.files)
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part in the request"}), 400
 
+    file = request.files['file']
+    print(file)
+    # If the user does not select a file, the browser submits an empty file without a filename
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+
+    if file:
+        filename = 'data.csv'
+        file.save(filename)
+
+    return jsonify({"error": "No selected file"}), 400
 if __name__ == '__main__':
-    print(response)
     app.run(debug=True)
